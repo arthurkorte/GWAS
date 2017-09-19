@@ -1,17 +1,26 @@
+## function for plotting GWAS results, default filter is MAF 5%, to change for MAC filter change maf_or_mac to a different value then 1
 
-
- plot_gwas<-function(output,h=8,maf=0.05,black=TRUE,thres=NA,max.y=NA,show=NA,lower.limit=0.01) {
+plot_gwas<-function(output,h=8,maf_or_mac=1,maf=0.05,mac=NA,black=T,thres=NA,max.y=NA,show=NA,lower.limit=0.01,title=TRUE,name=NA) {
  colnames(output)[h]<-'Plot'
+if(maf_or_mac==1) {
+mafi=paste('maf',maf)
+new_<-subset(output,output$MAF>=maf&output$Plot<lower.limit)
+if (is.na(thres)==T) {thres<--log10(0.05/nrow(subset(output,output$MAF>=maf)))}
 
-new_<-subset(output,output$MAF>maf&output$Plot<lower.limit)
-if(is.na(max.y)==TRUE) {
+if (is.na(mac)==FALSE) {cat ('MAF Filter of',maf,' have been used, for MAC set maf_or_mac to 2','\n')}}
+ else { 
+mafi<-paste('mac',mac)
+new_<-subset(output,output$MAC>=mac&output$Plot<lower.limit)
+if (is.na(thres)==T) {thres<--log10(0.05/nrow(subset(output,output$MAC>=mac)))}}
+
+if(is.na(max.y)==T) {
 max.y<-ceiling(-log10(min(new_[,h]))+1)} 
 
 output_<-new_[order(new_$Pos),]
 output_ok<-output_[order(output_$Chr),]
 
 maxpos<-c(0,cumsum(aggregate(output_ok$Pos,list(output_ok$Chr),max)$x+max(cumsum(aggregate(output_ok$Pos,list(output_ok$Chr),max)$x))/100))
-if(black==TRUE) {
+if(black==T) {
 plot_col<-rep(c('gray10','gray60'),ceiling(max(unique(output_ok$Chr))/2))
 } else { 
 require(RColorBrewer)
@@ -35,10 +44,10 @@ d<-(aggregate(output_ok$xpos,list(output_ok$Chr),min)$x+aggregate(output_ok$xpos
 plot(output_ok$xpos,-log10(output_ok$Plot),col=output_ok$col,pch=16,ylab='-log10(pval)',xaxt='n',xlab='chromosome',axes=FALSE,cex=1.2,ylim=c(-log10(lower.limit),max.y))
 axis(1,tick=FALSE,at=d,labels=c(1:max(unique(output_ok$Chr))))
 axis(2,lwd=2)
-if (is.na(thres)==TRUE) {thres<--log10(0.05/nrow(output))}
 abline(h=thres,lty=9,col='black',lwd=2)
-
-if(is.character(show)==TRUE) {
+if(title==TRUE) {
+title(main=paste(name,mafi))}
+if(is.character(show)==T) {
 poso<-list()
 for (z in 1:length(show)) {
 poso[[z]]<-tair9[which(tair9[,3]==show[[z]]),1]+maxpos[tair9[which(tair9[,3]==show[[z]]),4]]}
@@ -55,7 +64,7 @@ out<-subset(output,output$MAF>maf&output$Plot<0.05)
 
 e<--log10(ppoints(nrow(out_)))[1:nrow(out)]
 o<--log10(sort(out$Plot))
-if(is.na(max.y)==TRUE) {
+if(is.na(max.y)==T) {
 max.y<-ceiling(max(unlist(o)))+1} 
 
 
@@ -96,15 +105,15 @@ vu<--log10(min(localo[,h]))+2
 xx<-X_ok[,colnames(X_ok)%in%localo$SNP]
 snp_mean<-apply(xx,2,mean)
 snp_sd<-apply(xx,2,sd)
-snpm<-matrix(nrow=nrow(xx),ncol=ncol(xx),data=snp_mean,byrow=TRUE)
-snpd<-matrix(nrow=nrow(xx),ncol=ncol(xx),data=snp_sd,byrow=TRUE)
+snpm<-matrix(nrow=nrow(xx),ncol=ncol(xx),data=snp_mean,byrow=T)
+snpd<-matrix(nrow=nrow(xx),ncol=ncol(xx),data=snp_sd,byrow=T)
 xx_stand<-(xx-snpm)/snpd
 r2<-(crossprod(xx_stand,xx_stand)/nrow(xx))^2
 
 r2<<-r2/r2[1,1]
 
 
-if(high==TRUE) {
+if(high==T) {
 lead_snp<-as.character(localo[which(localo[,h]==min(localo[,h])),1][1])
 
 } else { lead_snp<-new_[order(new_[,h]),][z,1]}
@@ -116,7 +125,7 @@ ld_col<-jet.colors(21)[round(ld*20)+1]
 
 
 plot(localo[,3],-log10(localo[,h]),type='p',pch=19,xlab='',ylab='-log(p)',col=ld_col,ylim=c(2,vu),xlim=c(b,c),axes=FALSE,cex=cex)
-par(new=TRUE)
+par(new=T)
 plot(localo[which(localo[,1]%in%lead_snp),3],-log10(localo[which(localo[,1]%in%lead_snp),h]),type='p',pch=18,xlab='',ylab='-log(p)',ylim=c(2,vu),cex=cex.c,col='red',xlim=c(b,c),axes=FALSE,main=localo[which(localo[,1]%in%lead_snp),1])
 abline(h=-log10(0.05/ncol(X_ok)),lty=2,lwd=2)
 axis(1,lwd=2)
@@ -135,7 +144,7 @@ axis(4,lwd=4)
 
 for(z in 1:x) {
  rect(0.9,(0+((z-1)/x)),1.1,(0+((z)/x)),col=jet.colors(x)[z],border='gray')
- par(new=TRUE)}
+ par(new=T)}
 # if( z %% 2 !=0) {text(c,(+((z-1)/5)),hallo[z])}}
  #text(c,(2+((z)/5)),hallo[21])
 }
