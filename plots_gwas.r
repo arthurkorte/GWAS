@@ -27,7 +27,7 @@ require(RColorBrewer)
 colorCount = length(unique(output_ok$Chr))
 getPalette = colorRampPalette(brewer.pal(colorCount, "Set1"))
 
-plot_col<-getPalette(colourCount)}
+plot_col<-getPalette(colorCount)}
 size<-aggregate(output_ok$Pos,list(output_ok$Chr),length)$x
 
 a<-rep(maxpos[1],size[1])
