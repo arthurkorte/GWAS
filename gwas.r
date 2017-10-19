@@ -145,7 +145,7 @@ pa<-nrow(Y1)
 
 
 F_1<-((RSS_env-R1_full)/1)/(R1_full/(pa-3))
-pval_Y1<-pf(F_1,1,(pa-3),lower.tail=FALSE)
+pval_Y1<-pf(F_1,1,(pa-2),lower.tail=FALSE)
 
 snp<-colnames(X_ok)
 out_models<-data.frame(SNP=snp,Pval=pval_Y1,variance_explained=1-R1_full/RSS_env)}
