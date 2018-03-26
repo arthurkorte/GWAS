@@ -80,7 +80,7 @@ axis(2,lwd=2)
 ## set parameters
 #high=T
 local_plot<-
-function(output,h=8,chr=0,pos=0,rank=1,high=FALSE,maf=0.05,window_size=50,cex=1,cex.c=2){
+function(output,h=8,chr=0,pos=0,rank=1,high=FALSE,maf=0.05,window_size=50,cex=1,cex.c=2,thres=8){
 colnames(output)[h]<-'Plot'
 new_<-subset(output,output$MAF>maf)
 colnames(new_)[2]<-'chromosomes'
@@ -127,7 +127,8 @@ ld_col<-jet.colors(21)[round(ld*20)+1]
 plot(localo[,3],-log10(localo[,h]),type='p',pch=19,xlab='',ylab='-log(p)',col=ld_col,ylim=c(2,vu),xlim=c(b,c),axes=FALSE,cex=cex)
 par(new=T)
 plot(localo[which(localo[,1]%in%lead_snp),3],-log10(localo[which(localo[,1]%in%lead_snp),h]),type='p',pch=18,xlab='',ylab='-log(p)',ylim=c(2,vu),cex=cex.c,col='red',xlim=c(b,c),axes=FALSE,main=localo[which(localo[,1]%in%lead_snp),1])
-abline(h=-log10(0.05/ncol(X_ok)),lty=2,lwd=2)
+abline(h=thres,lty=2,lwd=2)
+#abline(h=-log10(0.05/ncol(X_ok)),lty=2,lwd=2)
 axis(1,lwd=2)
 axis(2,lwd=2)
 
