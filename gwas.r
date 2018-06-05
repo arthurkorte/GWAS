@@ -29,7 +29,7 @@
 
 # calculate.effect.size=TRUE ist super slow in the current implementation ! 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE) {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE) {
 
 stopifnot(is.numeric(Y[,1]))
 Y_<-Y[order(Y[,1]),]
@@ -164,6 +164,15 @@ snp<-colnames(X_ok)
 out_models_lm<-data.frame(SNP=snp,Pval_lm=pval_Y1_lm)
 output<-merge(output,out_models_lm,by='SNP')
 
+}
+
+if (include.kw==TRUE) {
+  kw<-apply(X_ok,2,function(x){kruskal.test(Y,x)$p.value})
+  
+  KW<-cbind(names(kw),kw)
+  colnames(KW)<-c('SNP','Pval_kw')
+  output<-merge(output,KW,by='SNP')
+  
 }
 
 ## update tp SNPs with correct model 
