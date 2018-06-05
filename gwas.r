@@ -111,7 +111,8 @@ cat('pseudo-heritability estimate is ',herit,'\n')
 }
 if (run==FALSE) {
 
-cat('no GWAS performed','\n') } else {
+cat('no GWAS performed','\n')
+return(herit) } else {
 
 M<-solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
 
