@@ -29,7 +29,7 @@
 
 # calculate.effect.size=TRUE ist super slow in the current implementation ! 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE) {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE, mc = FALSE) {
 
 stopifnot(is.numeric(Y[,1]))
 Y_<-Y[order(Y[,1]),]
@@ -138,11 +138,21 @@ for ( t in 2:ncol(X_ok)) {
 out_models<-data.frame(SNP=colnames(models1),Pval=models1[4,],variance_explained=veb,beta=bet)
 
 } else {
+
 #EMMAX SCAN
 RSS_env<-rep(sum(lsfit(int_t,Y_t,intercept = FALSE)$residuals^2),ncol(X_ok))
-R1_full<-apply(X_ok,2,function(x){sum(lsfit(cbind(int_t,crossprod(M,x)),Y_t,intercept = FALSE)$residuals^2)})
-pa<-nrow(Y1)
 
+if(mc==FALSE){
+R1_full<-apply(X_ok,2,function(x){sum(lsfit(cbind(int_t,crossprod(M,x)),Y_t,intercept = FALSE)$residuals^2)})
+}else{
+if(!require(doMC)) install.packages("doMC")
+require(doMC)
+registerDoMC(system("cat /proc/cpuinfo  | grep processor  | wc -l", intern = T))
+R1_full <- foreach(i = 1:ncol(X_ok), .combine = "c") %dopar%
+sum(lsfit(cbind(int_t,crossprod(M,X_ok[,i])),Y_t,intercept = FALSE)$residuals^2)
+ }
+    
+pa<-nrow(Y1)
 
 F_1<-((RSS_env-R1_full)/1)/(R1_full/(pa-3))
 pval_Y1<-pf(F_1,1,(pa-2),lower.tail=FALSE)
