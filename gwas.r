@@ -11,12 +11,17 @@
 
 ##REQUIRED DATA & FORMAT
 
+library(msm)
+library(nadiv)
+library(doMC)   # only required for multi-core
+
 #requires functions from the original emma function (Kang et al. 2008, Genetics) 
-#source('emma.r')
+# source ('emma.r')
 #PHENOTYPE - Y: a n by m matrix, where n=number of individuals and the rownames(Y) contains the individual names
 
 #GENOTYPE - X: a n by m matrix, where n=number of individuals, m=number of SNPs, with rownames(X)=individual names, and colnames(X)=SNP names
 #KINSHIP - K: a n by n matrix, with rownames(K)=colnames(K)=individual names, you can calculate K as IBS matrix using the emma package K<-emma.kinship(t(X)) 
+# or use the vanRaden Kinship matrix from the function G.matrix in the R-package snpReady
 #each of these data being sorted in the same way, according to the individual name
 #
 #
@@ -27,9 +32,9 @@
 #######
 ###WARNINGS####
 
-# calculate.effect.size=TRUE ist super slow in the current implementation ! 
+# mc enabled to use on linux 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE, mc = FALSE, cores = 10) {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE, mc = FALSE, cores ='all') {
 
     stopifnot(is.numeric(Y[,1]))
     Y_ <- Y[order(Y[,1]),]
@@ -95,13 +100,18 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
     ex <- as.matrix(Xo)
 
     null <- emma.REMLE(Y,ex,K_stand)
-    herit <- null$vg/(null$vg+null$ve)
-
-    if(report == TRUE) {
-        cat('pseudo-heritability estimate is ',herit,'\n')
-    }
-    if(run == FALSE) {
+    herit<-null$vg/(null$vg+null$ve)
+    covH1<-matrix(nrow=2,ncol=2,data=c(null$vg,null$ve,null$ve,null$vg))
+    se_h1<-deltamethod( ~ x1/(x1+x2),c(null$vg,null$ve),covH1)
+      
+      if (report==TRUE) {
+        cat('pseudo-heritability estimate is ',herit,'+/-',se_h1,'\n')
+      }
+      if (run==FALSE) {
+        
         cat('no GWAS performed','\n')
+        return(c(herit,se_h1))   
+      
     } else {
         M <- solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
         Y_t <- crossprod(M,Y)
@@ -110,31 +120,35 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
         if(calculate.effect.size == TRUE) {
             models1 <- apply(X_ok,2,function(x){summary(lm(Y_t~0+int_t+crossprod(M,x)))$coeff[2,]})
             bet <- models1[1,]
-### variance explained from betas veb   !super slow this way!
+            se <- models1[2,]
+### variance explained from betas veb  
                                         # bet^2*var(X_ok[,t])/var(Y[,n]) =  veb/(1-veb)
             veb <- bet[1]^2*var(X_ok[,1])/var(Y)/(1+bet[1]^2*var(X_ok[,1])/var(Y))
             for( t in 2:ncol(X_ok)) {
                 veb <- c(veb,bet[t]^2*var(X_ok[,t])/var(Y)/(1+bet[t]^2*var(X_ok[,t])/var(Y)))
             }
-                                        # similar (but slightly different) to RSS method below or to adjusted R2 from lm call 
-            out_models<-data.frame(SNP=colnames(models1),Pval=models1[4,],variance_explained=veb,beta=bet)
+          
+# similar (but slightly different) to RSS method below or to adjusted R2 from lm call 
+            out_models<-data.frame(SNP=colnames(models1),Pval=models1[4,],variance_explained=veb,beta=bet,se_beta=se)
 
         } else {
              #EMMAX SCAN
             RSS_env <- rep(sum(lsfit(int_t,Y_t,intercept = FALSE)$residuals^2),ncol(X_ok))
             
             if(mc == FALSE) {
+              
                 R1_full <- apply(X_ok,2,function(x){sum(lsfit(cbind(int_t,crossprod(M,x)),Y_t,intercept = FALSE)$residuals^2)})
+            
             } else {
-                if(!require(doMC)) install.packages("doMC")
-                require(doMC)
+                
                 if(cores == "all") { 
                     registerDoMC(system("cat /proc/cpuinfo  | grep processor  | wc -l", intern = T))
                 } else {
                     registerDoMC(cores)
                 }
-                R1_full <- foreach(i = 1:ncol(X_ok), .combine = "c") %dopar%
+                    R1_full <- foreach(i = 1:ncol(X_ok), .combine = "c") %dopar%
                     sum(lsfit(cbind(int_t,crossprod(M,X_ok[,i])),Y_t,intercept = FALSE)$residuals^2)
+            
             }
             
             pa<-nrow(Y1)
@@ -185,8 +199,6 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
         }
     }
 }
-
-
 
 
 

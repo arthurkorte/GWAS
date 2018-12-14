@@ -46,7 +46,7 @@ axis(1,tick=FALSE,at=d,labels=c(1:max(unique(output_ok$Chr))))
 axis(2,lwd=2)
 abline(h=thres,lty=9,col='black',lwd=2)
 if(title==TRUE) {
-title(main=paste(name,mafi))}
+title(main=name)}
 if(is.character(show)==T) {
 poso<-list()
 for (z in 1:length(show)) {
