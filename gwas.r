@@ -42,6 +42,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
     rownames(Y) <- as.integer(Y_[,1])
     Y <- na.omit(Y)
     XX <- X[rownames(X) %in% rownames(Y),]
+    XX<-XX[order(as.numeric(rownames(XX))),]
     if(report == TRUE) {
         cat ('GWAS performed on', length(which(rownames(Y)%in%rownames(X))),'ecotypes, ', nrow(Y)-length(which(rownames(Y)%in%rownames(X))),'values excluded','\n')
     }
@@ -67,6 +68,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
     K1 <- K[rownames(K) %in% ecot_id,]
     K2 <- K1[,colnames(K1) %in% ecot_id]
     K_ok <- as.matrix(K2)
+    K_ok<-K_ok[order(as.numeric(rownames(K_ok))),order(as.numeric(colnames(K_ok)))]
 
     a <- rownames(K_ok)
 
