@@ -11,11 +11,12 @@
 
 ##REQUIRED DATA & FORMAT
 
-library(msm)
-library(nadiv)
-library(doMC)   # only required for multi-core
 
-#requires functions from the original emma function (Kang et al. 2008, Genetics) 
+library(doMC) # only required for multi-core
+library(gaston)
+
+
+#requires functions from the original emma function (Kang et al. 2008, Genetics) to calculate the exact p-value if update.top_snps=TRUE
 # source ('emma.r')
 #PHENOTYPE - Y: a n by m matrix, where n=number of individuals and the rownames(Y) contains the individual names
 
@@ -34,7 +35,7 @@ library(doMC)   # only required for multi-core
 
 # mc enabled to use on linux 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE, mc = FALSE, cores ='all') {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE,plot_h=FALSE, mc = FALSE, cores ='all') {
 
     stopifnot(is.numeric(Y[,1]))
     Y_ <- Y[order(Y[,1]),]
@@ -52,7 +53,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
         if(report == TRUE) {
             cat('SNP_INFO file created','\n')
         }
-        SNP_INFO<-data.frame(cbind(colnames(X),matrix(nrow=ncol(X),ncol=2,data=unlist(strsplit(colnames(X),split='- ')),byrow=T)))
+        SNP_INFO<-data.frame(cbind(colnames(X),matrix(nrow=ncol(X),ncol=2,data=unlist(strsplit(colnames(X),split='- ')),byrow=TRUE)))
         colnames(SNP_INFO) <-c('SNP','Chr','Pos')
         SNP_INFO[,2]<-as.numeric(SNP_INFO[,2])
         SNP_INFO[,3]<-as.numeric(SNP_INFO[,3])
@@ -98,24 +99,36 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
     
 # REML
 
-    Xo <- rep(1,nrow(X_ok))
-    ex <- as.matrix(Xo)
 
-    null <- emma.REMLE(Y,ex,K_stand)
-    herit<-null$vg/(null$vg+null$ve)
-    covH1<-matrix(nrow=2,ncol=2,data=c(null$vg,null$ve,null$ve,null$vg))
-    se_h1<-deltamethod( ~ x1/(x1+x2),c(null$vg,null$ve),covH1)
+    null <-lmm.aireml(Y,K=K_stand)
+    herit<-null$tau/(null$tau+null$sigma2)
+    
+    H2 <- seq(0,1,length=101)
+    lik <- lmm.diago.likelihood(h2 = H2, Y = Y, eigenK = eigen(K_stand))
+   minh<-min(H2[which(exp(lik$likelihood-max(lik$likelihood))>0.9)])
+   maxh<-max(H2[which(exp(lik$likelihood-max(lik$likelihood))>0.9)])
+   # covH1<-matrix(nrow=2,ncol=2,data=c(null$vg,null$ve,null$ve,null$vg))
+  #  se_h1<-deltamethod( ~ x1/(x1+x2),c(null$vg,null$ve),covH1)
       
       if (report==TRUE) {
-        cat('pseudo-heritability estimate is ',herit,'+/-',se_h1,'\n')
+        cat('pseudo-heritability estimate is',round(herit,digits=3),'with a 90% CI between',minh,'and',maxh,'.\n')
       }
+   if(plot_h==TRUE) {
+     pdf(file='heritability_likelihood.pdf')
+         plot(H2, exp(lik$likelihood-max(lik$likelihood)), type="l", ylab="relative likelihood")
+        points(herit,exp(null$logL-max(lik$likelihood)),pch=16,col='red')
+        abline(h=0.90,lty=2,col='red')
+        cat('A heritability likelihood plot is generated','\n')
+      dev.off()
+   }
+      
       if (run==FALSE) {
         
         cat('no GWAS performed','\n')
-        return(c(herit,se_h1))   
+        return(c(herit,minh,maxh))   
       
     } else {
-        M <- solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
+        M <- solve(chol(null$tau*K_stand+null$sigma2*diag(dim(K_stand)[1])))
         Y_t <- crossprod(M,Y)
         int_t <- crossprod(M,(rep(1,length(Y))))
         
@@ -144,7 +157,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
             } else {
                 
                 if(cores == "all") { 
-                    registerDoMC(system("cat /proc/cpuinfo  | grep processor  | wc -l", intern = T))
+                    registerDoMC(system("cat /proc/cpuinfo  | grep processor  | wc -l", intern = TRUE))
                 } else {
                     registerDoMC(cores)
                 }
@@ -166,7 +179,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
         
         if(include.lm == TRUE) {
             RSS_env_ <- rep(sum(lsfit(rep(1,length(Y)),Y,intercept = FALSE)$residuals^2),ncol(X_ok))
-            R1_full_ <- apply(X_ok,2,function(x){sum(lsfit(x,Y,intercept = T)$residuals^2)})
+            R1_full_ <- apply(X_ok,2,function(x){sum(lsfit(x,Y,intercept = TRUE)$residuals^2)})
             pa<-nrow(Y1)
             
             F_1_ <- ((RSS_env_-R1_full_)/1)/(R1_full_/(pa-3))
