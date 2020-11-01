@@ -12,4 +12,6 @@ plots_gwas.r is a script for plotting the results
 emma.r use the emma function (Kang et all. 2008) for the MRLE
 This is used to fit the full model in the gwas.r script to update the pvalues of the top SNPs.
 
-sim_Y.r is a function to simulate Phenotypes to benchmark and test GWAS approaches. Data need for the are provided in the data section. 
+sim_Y.r is a function to simulate Phenotypes to benchmark and test GWAS approaches. Data need for the simulations are provided in the data section.
+
+Additional sample data to run GWAS can be find in the MTMM repository. 
