@@ -12,12 +12,12 @@
 ##REQUIRED DATA & FORMAT
 
 
-library(doMC) # only required for multi-core
-library(gaston)
+#library(doMC) # only required for multi-core
+#library(gaston) # only required if AI algorithm is used
 
 
-#requires functions from the original emma function (Kang et al. 2008, Genetics) to calculate the exact p-value if update.top_snps=TRUE
-# source ('emma.r')
+#requires functions from the original emma function (Kang et al. 2008, Genetics) to calculate the exact p-value if update.top_snps=TRUE or if AI=FALSE 
+# source ('emma.r')  needs to be sourced before.
 #PHENOTYPE - Y: a n by m matrix, where n=number of individuals and the rownames(Y) contains the individual names
 
 #GENOTYPE - X: a n by m matrix, where n=number of individuals, m=number of SNPs, with rownames(X)=individual names, and colnames(X)=SNP names
@@ -35,7 +35,7 @@ library(gaston)
 
 # mc enabled to use on linux 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE,plot_h=FALSE, mc = FALSE, cores ='all') {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,AI=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE,plot_h=FALSE, mc = FALSE, cores ='all') {
 
     stopifnot(is.numeric(Y[,1]))
     Y_ <- Y[order(Y[,1]),]
@@ -99,10 +99,11 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
     
 # REML
 
-
+if (AI==TRUE) {
+  require(gaston)
     null <-lmm.aireml(Y,K=K_stand)
     herit<-null$tau/(null$tau+null$sigma2)
-    
+    M <- solve(chol(null$tau*K_stand+null$sigma2*diag(dim(K_stand)[1])))
     H2 <- seq(0,1,length=101)
     lik <- lmm.diago.likelihood(h2 = H2, Y = Y, eigenK = eigen(K_stand))
    minh<-min(H2[which(exp(lik$likelihood-max(lik$likelihood))>0.9)])
@@ -121,14 +122,26 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
         cat('A heritability likelihood plot is generated','\n')
       dev.off()
    }
-      
-      if (run==FALSE) {
+} else {
+  
+  null<-emma.REMLE(Y,ex,K_stand)
+  
+  herit<-null$vg/(null$vg+null$ve) }
+    if (report==TRUE) {
+      cat('pseudo-heritability estimate is',round(herit,digits=3),'\n')
+    }
+    M <- solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
+}
+      if (run==FALSE&AI==TRUE) {
         
         cat('no GWAS performed','\n')
+  
         return(c(herit,minh,maxh))   
+      }
+if (run==FALSE&AI==FALSE) {
+       return(herit)}
+   if (run==TRUE) {
       
-    } else {
-        M <- solve(chol(null$tau*K_stand+null$sigma2*diag(dim(K_stand)[1])))
         Y_t <- crossprod(M,Y)
         int_t <- crossprod(M,(rep(1,length(Y))))
         
@@ -155,7 +168,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
                 R1_full <- apply(X_ok,2,function(x){sum(lsfit(cbind(int_t,crossprod(M,x)),Y_t,intercept = FALSE)$residuals^2)})
             
             } else {
-                
+                require(doMC)
                 if(cores == "all") { 
                     registerDoMC(system("cat /proc/cpuinfo  | grep processor  | wc -l", intern = TRUE))
                 } else {
@@ -213,7 +226,7 @@ amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,calculate.effect.size=FALSE,includ
             return(output)
         }
     }
-}
+
 
 
 
