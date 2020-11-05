@@ -126,11 +126,13 @@ if (AI==TRUE) {
   
   null<-emma.REMLE(Y,ex,K_stand)
   
-  herit<-null$vg/(null$vg+null$ve) }
+  herit<-null$vg/(null$vg+null$ve) 
+  M <- solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
+  
     if (report==TRUE) {
       cat('pseudo-heritability estimate is',round(herit,digits=3),'\n')
     }
-    M <- solve(chol(null$vg*K_stand+null$ve*diag(dim(K_stand)[1])))
+   
 }
       if (run==FALSE&AI==TRUE) {
         
@@ -227,7 +229,7 @@ if (run==FALSE&AI==FALSE) {
         }
     }
 
-
+}
 
 
 
