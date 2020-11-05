@@ -123,7 +123,8 @@ if (AI==TRUE) {
       dev.off()
    }
 } else {
-  
+  Xo<-rep(1,nrow(X_ok))
+  ex<-as.matrix(Xo)
   null<-emma.REMLE(Y,ex,K_stand)
   
   herit<-null$vg/(null$vg+null$ve) 
