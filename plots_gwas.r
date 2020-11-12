@@ -1,26 +1,26 @@
 ## function for plotting GWAS results, default filter is MAF 5%, to change for MAC filter change maf_or_mac to a different value then 1
 
-plot_gwas<-function(output,h=8,maf_or_mac=1,maf=0.05,mac=NA,black=T,thres=NA,max.y=NA,show=NA,lower.limit=0.01,title=TRUE,name=NA) {
+plot_gwas<-function(output,h=8,maf_or_mac=1,maf=0.05,mac=NA,black=TRUE,thres=NA,max.y=NA,show=NA,lower.limit=0.01,title=TRUE,name=NA) {
  colnames(output)[h]<-'Plot'
 if(maf_or_mac==1) {
 mafi=paste('maf',maf)
 new_<-subset(output,output$MAF>=maf&output$Plot<lower.limit)
-if (is.na(thres)==T) {thres<--log10(0.05/nrow(subset(output,output$MAF>=maf)))}
+if (is.na(thres)==TRUE) {thres<--log10(0.05/nrow(subset(output,output$MAF>=maf)))}
 
 if (is.na(mac)==FALSE) {cat ('MAF Filter of',maf,' have been used, for MAC set maf_or_mac to 2','\n')}}
  else { 
 mafi<-paste('mac',mac)
 new_<-subset(output,output$MAC>=mac&output$Plot<lower.limit)
-if (is.na(thres)==T) {thres<--log10(0.05/nrow(subset(output,output$MAC>=mac)))}}
+if (is.na(thres)==TRUE) {thres<--log10(0.05/nrow(subset(output,output$MAC>=mac)))}}
 
-if(is.na(max.y)==T) {
+if(is.na(max.y)==TRUE) {
 max.y<-ceiling(-log10(min(new_[,h]))+1)} 
 
 output_<-new_[order(new_$Pos),]
 output_ok<-output_[order(output_$Chr),]
 
 maxpos<-c(0,cumsum(aggregate(output_ok$Pos,list(output_ok$Chr),max)$x+max(cumsum(aggregate(output_ok$Pos,list(output_ok$Chr),max)$x))/100))
-if(black==T) {
+if(black==TRUE) {
 plot_col<-rep(c('gray10','gray60'),ceiling(max(unique(output_ok$Chr))/2))
 } else { 
 require(RColorBrewer)
@@ -47,7 +47,7 @@ axis(2,lwd=2)
 abline(h=thres,lty=9,col='black',lwd=2)
 if(title==TRUE) {
 title(main=name)}
-if(is.character(show)==T) {
+if(is.character(show)==TRUE) {
 poso<-list()
 for (z in 1:length(show)) {
 poso[[z]]<-tair9[which(tair9[,3]==show[[z]]),1]+maxpos[tair9[which(tair9[,3]==show[[z]]),4]]}
@@ -113,7 +113,7 @@ r2<-(crossprod(xx_stand,xx_stand)/nrow(xx))^2
 r2<<-r2/r2[1,1]
 
 
-if(high==T) {
+if(high==TRUE) {
 lead_snp<-as.character(localo[which(localo[,h]==min(localo[,h])),1][1])
 
 } else { lead_snp<-new_[order(new_[,h]),][z,1]}
@@ -145,7 +145,7 @@ axis(4,lwd=4)
 
 for(z in 1:x) {
  rect(0.9,(0+((z-1)/x)),1.1,(0+((z)/x)),col=jet.colors(x)[z],border='gray')
- par(new=T)}
+ par(new=TRUE)}
 # if( z %% 2 !=0) {text(c,(+((z-1)/5)),hallo[z])}}
  #text(c,(2+((z)/5)),hallo[21])
 }
