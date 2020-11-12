@@ -13,7 +13,7 @@
 # to simulate only in specific accession provide an integer of accessions ids in sp_acc (length need to be >1). 
 # to siumulate distinct markers, the script can be modified manually.
 
-sim_Y<-function(n=100,acc=A,sp_acc=0,no_acc=200,fix_acc=TRUE,SNPs=X,no_snps=1,ve=.1,mac=5,h2=0.7,seed=42) {
+sim_Y<-function(n=100,acc=A,sp_acc=0,no_acc=200,fix_acc=TRUE,SNPs=X,no_snps=1,ve=.1,mac=5,h2=0.7,seed=42,bk=1000) {
   stopifnot(no_snps>0)
   stopifnot(length(ve)==no_snps)
   set.seed(seed)
@@ -41,9 +41,9 @@ caus<-X_ok[,sample(1:ncol(X_ok),(no_snps+1))]
 
 X3<-X_ok[,!colnames(X_ok)%in%colnames(caus)]
 
-back<-X3[,sample(1:ncol(X3),1000)]
+back<-X3[,sample(1:ncol(X3),bk)]
 
-betas<-rnorm(1000,mean=0,sd=0.1)
+betas<-rnorm(bk,mean=0,sd=0.1)
 first<- back %*% betas
 ### adding genetic background to data
 sim<-data.frame(ecot_id=as.integer(rownames(back)),value=first)
@@ -81,9 +81,9 @@ if (fix_acc==FALSE) {
   
   X3<-X_ok[,!colnames(X_ok)%in%colnames(caus)]
   
-  back<-X3[,sample(1:ncol(X3),1000)]
+  back<-X3[,sample(1:ncol(X3),bk)]
   
-  betas<-rnorm(1000,mean=0,sd=0.1)
+  betas<-rnorm(bk,mean=0,sd=0.1)
   first<- back %*% betas
   ### adding genetic background to data
   sim<-data.frame(ecot_id=as.integer(rownames(back)),value=first)
@@ -115,9 +115,9 @@ if (fix_acc==FALSE) {
   
   X3<-X_ok[,!colnames(X_ok)%in%colnames(caus)]
   
-  back<-X3[,sample(1:ncol(X3),1000)]
+  back<-X3[,sample(1:ncol(X3),bk)]
   
-  betas<-rnorm(1000,mean=0,sd=0.1)
+  betas<-rnorm(bk,mean=0,sd=0.1)
   first<- back %*% betas
   ### adding genetic background to data
   sim<-data.frame(ecot_id=as.integer(rownames(back)),value=first)
