@@ -1,6 +1,6 @@
 ## function for plotting GWAS results, default filter is MAF 5%, to change for MAC filter change maf_or_mac to a different value then 1
 
-plot_gwas<-function(output,h=8,maf_or_mac=1,maf=0.05,mac=NA,black=TRUE,thres=NA,max.y=NA,show=NA,lower.limit=0.01,title=TRUE,name=NA) {
+plot_gwas<-function(output,h=8,maf_or_mac=1,maf=0.05,mac=NA,black=TRUE,colSet='Dark2',thres=NA,max.y=NA,show=NA,lower.limit=0.01,title=TRUE,name=NA) {
  colnames(output)[h]<-'Plot'
 if(maf_or_mac==1) {
 mafi=paste('maf',maf)
@@ -25,7 +25,7 @@ plot_col<-rep(c('gray10','gray60'),ceiling(max(unique(output_ok$Chr))/2))
 } else { 
 require(RColorBrewer)
 colorCount = length(unique(output_ok$Chr))
-getPalette = colorRampPalette(brewer.pal(colorCount, "Set1"))
+getPalette = colorRampPalette(brewer.pal(colorCount,colSet))
 
 plot_col<-getPalette(colorCount)}
 size<-aggregate(output_ok$Pos,list(output_ok$Chr),length)$x
