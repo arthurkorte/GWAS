@@ -56,7 +56,7 @@ abline(v=poso,lty=2,col=2)}
 }
 
 
-qq_plot<-function(output,h=8,farbe='red',max.y=NA,maf=0.05,sex=2) {
+qq_plot<-function(output,h=8,farbe='red',max.y=NA,maf=0.05,sex=2,main='') {
 colnames(output)[h]<-'Plot'
 out_<-subset(output,output$MAF>maf)
 
@@ -72,6 +72,7 @@ plot(e,o,type='l',col=farbe,xlab=expression(Expected~~-log[10](italic(p))), ylab
 abline(0,1,col="dark grey")
 axis(1,lwd=2)
 axis(2,lwd=2)
+title(main=main)
 }
 
 

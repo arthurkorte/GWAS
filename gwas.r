@@ -35,7 +35,7 @@
 
 # mc enabled to use on linux 
 
-amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,AI=TRUE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE,plot_h=FALSE, mc = FALSE, cores ='all') {
+amm_gwas<-function(Y,X,K,p=0.001,m=2,run=TRUE,AI=FALSE,calculate.effect.size=FALSE,include.lm=FALSE,include.kw=FALSE,use.SNP_INFO=FALSE,update.top_snps=FALSE,report=TRUE,plot_h=FALSE, mc = FALSE, cores ='all') {
 
     stopifnot(is.numeric(Y[,1]))
     Y_ <- Y[order(Y[,1]),]
